@@ -1,0 +1,1 @@
+// DELETED - Moved to src/components/layout/Sidebar.tsx
