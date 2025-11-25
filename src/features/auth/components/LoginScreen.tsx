@@ -1,303 +1,119 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Lock, Loader2, AlertCircle, Mail, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import { useTheme } from '@/core/contexts/ThemeContext';
 import { useUI } from '@/core/contexts/UIContext';
-import { useLocation, useNavigate } from 'react-router-dom';
-
-// Reusable Input Component
-const AuthInput = ({ 
-    type = 'text', 
-    placeholder, 
-    value, 
-    onChange, 
-    icon: Icon,
-    isDarkMode,
-    isPasswordToggle = false,
-    error = false
-}: {
-    type?: string;
-    placeholder: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    icon?: React.ElementType;
-    isDarkMode: boolean;
-    isPasswordToggle?: boolean;
-    error?: boolean;
-}) => {
-    const [showPassword, setShowPassword] = useState(false);
-    const inputType = isPasswordToggle ? (showPassword ? 'text' : 'password') : type;
-
-    return (
-        <div className="relative">
-            <input 
-                type={inputType}
-                value={value}
-                onChange={onChange}
-                className={`w-full rounded-xl px-4 py-3.5 pl-11 text-sm font-medium outline-none transition-all border ${
-                    error 
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
-                    : isDarkMode 
-                        ? 'bg-black/30 border-gray-700 text-white focus:border-[#84CC16] placeholder-gray-600' 
-                        : 'bg-white border-gray-200 text-gray-900 focus:border-[#84CC16] placeholder-gray-400'
-                }`}
-                placeholder={placeholder}
-            />
-            {Icon && <Icon size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${error ? 'text-red-500' : 'text-gray-400'}`} />}
-            
-            {isPasswordToggle && (
-                <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-            )}
-        </div>
-    );
-};
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { AppDispatch, RootState } from '@/redux/store';
+import { loginUser, resetError } from '@/features/auth/authSlice';
+import AuthLayout from '@/components/layout/AuthLayout';
+import AuthInput from '@/features/auth/components/AuthInput';
+const LoginSchema = Yup.object().shape({
+  email: Yup.string().required('Vui lòng nhập Email hoặc Username'),
+  password: Yup.string().required('Vui lòng nhập mật khẩu'),
+});
 
 const LoginScreen: React.FC = () => {
-  const { isDarkMode, primaryColor } = useTheme();
-  const { startLoading, stopLoading, showToast, isLoading } = useUI();
+  const { isDarkMode } = useTheme();
+  const { showToast } = useUI();
   const navigate = useNavigate();
-  const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading } = useSelector((state: RootState) => state.auth);
 
-  const [error, setError] = useState('');
-  
-  // State for all forms
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  useEffect(() => {
+    dispatch(resetError());
+  }, [dispatch]);
 
-  const view = location.pathname === '/register' ? 'REGISTER' 
-             : location.pathname === '/forgot-password' ? 'FORGOT_PASSWORD' 
-             : 'LOGIN';
+  const formik = useFormik({
+    initialValues: { email: '', password: '' },
+    validationSchema: LoginSchema,
+    onSubmit: async (values) => {
+      const resultAction = await dispatch(
+        loginUser({
+          username: values.email,
+          password: values.password,
+        })
+      );
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-        setError("Please enter both email and password.");
-        showToast('warning', 'Please enter both email and password.');
-        return;
-    }
-    
-    startLoading();
-    setError('');
-
-    try {
-      // Simulate API latency
-      await new Promise(r => setTimeout(r, 1500));
-      
-      // Mock Response
-      const mockResponse = {
-          data: {
-              access_token: 'demo-jwt-token-xyz-123',
-              user: { name: 'Admin User', email: email }
-          }
-      };
-      
-      localStorage.setItem('access_token', mockResponse.data.access_token);
-      window.dispatchEvent(new Event('auth-change'));
-      
-      showToast('success', 'Welcome back, Commander!');
-      navigate('/dashboard', { replace: true });
-    } catch (err: any) {
-      console.error(err);
-      setError('Invalid email or password.');
-      showToast('error', 'Invalid credentials. Please try again.');
-    } finally {
-      stopLoading();
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        showToast('error', 'Passwords do not match');
-        return;
-    }
-    
-    startLoading();
-    setError('');
-    
-    try {
-        await new Promise(r => setTimeout(r, 1500));
-        showToast('success', 'Account created! Please sign in.');
-        navigate('/login');
-    } catch (err) {
-        setError('Registration failed.');
-        showToast('error', 'Registration failed. Please contact admin.');
-    } finally {
-        stopLoading();
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    startLoading();
-    
-    try {
-        await new Promise(r => setTimeout(r, 1000));
-        showToast('info', 'Reset link sent to your email.');
-        navigate('/login');
-    } catch (err) {
-        setError('Failed to send reset link.');
-        showToast('error', 'Failed to send reset link.');
-    } finally {
-        stopLoading();
-    }
-  };
+      if (loginUser.fulfilled.match(resultAction)) {
+        showToast('success', 'Đăng nhập thành công!');
+        navigate('/dashboard', { replace: true });
+      } else {
+        showToast('error', 'Đăng nhập thất bại');
+      }
+    },
+  });
 
   return (
-    <div className={`min-h-screen w-full flex flex-col items-center justify-center p-4 transition-colors duration-500 relative ${isDarkMode ? 'bg-[#030712]' : 'bg-[#F9FAFB]'}`}>
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-         <div className="absolute top-[30%] left-[50%] -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[100px] transition-colors duration-500 opacity-20" style={{ backgroundColor: primaryColor }} />
-      </div>
+    <AuthLayout 
+      title="Welcome Back" 
+      subtitle="Sign in to access your dashboard."
+    >
+      <form onSubmit={formik.handleSubmit} className="space-y-2 text-left">
+        <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          Email / Username
+        </label>
+        <AuthInput
+          name="email"
+          placeholder="admin@example.com"
+          icon={Mail}
+          isDarkMode={isDarkMode}
+          value={formik.values.email}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.errors.email}
+          touched={formik.touched.email}
+        />
 
-      <div className="relative z-10 w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
-        <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/40 dark:border-white/10 text-center transition-all">
-            
-            <div className="w-16 h-16 bg-brand-lime-bg rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-lime/20">
-                <ShieldCheck size={32} className="text-brand-lime-dark" />
-            </div>
-            
-            {/* --- VIEW: LOGIN --- */}
-            {view === 'LOGIN' && (
-                <div className="animate-in fade-in slide-in-from-right-8 duration-300">
-                    <h1 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Welcome Back</h1>
-                    <p className={`text-sm mb-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Sign in to access your dashboard.
-                    </p>
+        <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          Password
+        </label>
+        <AuthInput
+          name="password"
+          type="password"
+          placeholder="••••••••"
+          icon={Lock}
+          isDarkMode={isDarkMode}
+          isPasswordToggle
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.errors.password}
+          touched={formik.touched.password}
+        />
 
-                    <form onSubmit={handleLogin} className="space-y-4 text-left">
-                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Email</label>
-                                <AuthInput 
-                                    type="email" 
-                                    placeholder="admin@example.com" 
-                                    value={email} 
-                                    onChange={(e) => setEmail(e.target.value)} 
-                                    icon={Mail} 
-                                    isDarkMode={isDarkMode} 
-                                    error={!!error}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Password</label>
-                                <AuthInput 
-                                    type="password" 
-                                    placeholder="••••••••" 
-                                    value={password} 
-                                    onChange={(e) => setPassword(e.target.value)} 
-                                    icon={Lock} 
-                                    isDarkMode={isDarkMode} 
-                                    isPasswordToggle
-                                    error={!!error}
-                                />
-                            </div>
-                         </div>
-
-                         {error && (
-                             <div className="flex items-center gap-2 text-xs text-red-500 font-bold bg-red-50 dark:bg-red-900/20 p-3 rounded-lg animate-in slide-in-from-top-2">
-                                 <AlertCircle size={14} /> {error}
-                             </div>
-                         )}
-
-                         <div className="flex justify-between items-center text-xs mt-2">
-                            <button type="button" onClick={() => navigate('/register')} className="font-bold text-gray-500 hover:text-brand-lime dark:text-gray-400 dark:hover:text-white transition-colors">Create Account</button>
-                            <button type="button" onClick={() => navigate('/forgot-password')} className="font-bold text-brand-lime-dark dark:text-brand-lime hover:underline">Forgot Password?</button>
-                         </div>
-
-                         <button 
-                            type="submit" 
-                            disabled={isLoading}
-                            className={`w-full py-3.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
-                                isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-brand-lime hover:bg-brand-lime-dark hover:scale-[1.02]'
-                            }`}
-                         >
-                            {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Sign In'}
-                         </button>
-                    </form>
-                </div>
-            )}
-
-            {/* --- VIEW: REGISTER --- */}
-            {view === 'REGISTER' && (
-                <div className="animate-in fade-in slide-in-from-right-8 duration-300">
-                    <h1 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Create Account</h1>
-                    <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Join the workspace. Admin approval required.
-                    </p>
-
-                    <form onSubmit={handleRegister} className="space-y-4 text-left">
-                         <AuthInput placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} icon={Mail} isDarkMode={isDarkMode} />
-                         <AuthInput placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} icon={User} isDarkMode={isDarkMode} />
-                         <AuthInput type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} icon={Lock} isDarkMode={isDarkMode} isPasswordToggle />
-                         <AuthInput type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} icon={Lock} isDarkMode={isDarkMode} error={!!error} />
-
-                         {error && (
-                             <div className="flex items-center gap-2 text-xs text-red-500 font-bold bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                                 <AlertCircle size={14} /> {error}
-                             </div>
-                         )}
-
-                         <button 
-                            type="submit" 
-                            disabled={isLoading}
-                            className={`w-full py-3.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${
-                                isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-brand-lime hover:bg-brand-lime-dark hover:scale-[1.02]'
-                            }`}
-                         >
-                            {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Create Account'}
-                         </button>
-
-                         <button type="button" onClick={() => navigate('/login')} className="w-full py-2 text-xs font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center justify-center gap-1">
-                             <ArrowLeft size={14} /> Back to Login
-                         </button>
-                    </form>
-                </div>
-            )}
-
-            {/* --- VIEW: FORGOT PASSWORD --- */}
-            {view === 'FORGOT_PASSWORD' && (
-                <div className="animate-in fade-in slide-in-from-right-8 duration-300">
-                    <h1 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Reset Password</h1>
-                    <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Enter your email to receive a recovery link.
-                    </p>
-
-                    <form onSubmit={handleResetPassword} className="space-y-6 text-left">
-                         <AuthInput placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} icon={Mail} isDarkMode={isDarkMode} />
-
-                         <button 
-                            type="submit" 
-                            disabled={isLoading}
-                            className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border ${
-                                isLoading 
-                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
-                                : 'bg-transparent border-brand-lime text-brand-lime-dark dark:text-brand-lime hover:bg-brand-lime-bg hover:border-brand-lime-dark'
-                            }`}
-                         >
-                            {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Send Reset Link'}
-                         </button>
-
-                         <button type="button" onClick={() => navigate('/login')} className="w-full py-2 text-xs font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center justify-center gap-1">
-                             <ArrowLeft size={14} /> Back to Login
-                         </button>
-                    </form>
-                </div>
-            )}
-
+        <div className="flex justify-between items-center text-xs mt-2 mb-6 px-1">
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="font-bold text-gray-500 hover:text-brand-lime dark:text-gray-400 dark:hover:text-white transition-colors"
+          >
+            Create Account
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/forgot-password')}
+            className="font-bold text-brand-lime-dark dark:text-brand-lime hover:underline"
+          >
+            Forgot Password?
+          </button>
         </div>
-        <p className="text-center mt-6 text-xs text-gray-400 dark:text-gray-600">
-            Powered by Weihu OS v2.5
-        </p>
-      </div>
-    </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`w-full py-3.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
+            isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-brand-lime hover:bg-brand-lime-dark hover:scale-[1.02]'
+          }`}
+        >
+          {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Sign In'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 };
 

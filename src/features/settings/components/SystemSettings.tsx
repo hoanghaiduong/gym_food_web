@@ -109,7 +109,7 @@ const SystemSettings: React.FC = () => {
       // LLM
       llmProvider: 'Gemini',
       llmKey: 'AIzaSyD-xxxxxxxxxxxxxxxxxxxxxxxx',
-      llmModel: 'gemini-1.5-flash',
+      llmModel: 'gemini-2.5-flash',
   });
 
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});

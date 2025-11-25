@@ -1,1 +1,0 @@
-// DELETED - Moved to src/components/ui/AvatarGroup.tsx

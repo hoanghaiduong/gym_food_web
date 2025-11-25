@@ -15,23 +15,21 @@ const INITIAL_DATA: SetupFormData = {
   dbPort: "5432",
   dbUser: "postgres",
   dbPass: "",
-  dbName: "weihu_core",
+  dbName: "gym_food_db",
   vectorProvider: "Qdrant",
   vectorHost: "http://localhost:6333",
   vectorKey: "",
-  vectorCollection: "gym_food_v1",
+  vectorCollection: "gym_food_hybird_v1",
   llmProvider: "Gemini",
   llmKey: "",
-  llmModel: "gemini-1.5-flash",
+  llmModel: "gemini-2.5-flash",
   botName: "GymCoach AI",
   welcomeMessage:
     "Xin chào, tôi có thể giúp gì cho lộ trình tập luyện của bạn?",
   language: "Vietnamese",
 };
 
-// --- [FIX SPAM] BIẾN TOÀN CỤC ---
-// Đặt biến này NGOÀI hook để nó không bị reset khi component unmount/remount
-// Chỉ cho phép check status 1 lần mỗi 2 giây
+// --- BIẾN TOÀN CỤC ---
 let globalLastCheckTime = 0;
 let globalCheckPromise: Promise<any> | null = null;
 
@@ -84,13 +82,11 @@ export const useSetupWizard = () => {
     return key ? { "x-admin-key": key } : {};
   };
 
-  // --- CORE: SYSTEM STATUS CHECK (ANTI-SPAM FIXED) ---
+  // --- CORE: SYSTEM STATUS CHECK ---
   useEffect(() => {
     const performCheck = async () => {
       const now = Date.now();
 
-      // [LOGIC CHẶN SPAM]
-      // Nếu vừa check trong vòng 2 giây trước, hoặc đang có request dở dang -> Bỏ qua
       if (now - globalLastCheckTime < 2000 || globalCheckPromise) {
         setIsCheckingStatus(false);
         return;
@@ -99,22 +95,27 @@ export const useSetupWizard = () => {
       globalLastCheckTime = now;
 
       try {
-        // Lưu promise để nếu component remount thì dùng lại promise cũ (nếu cần logic phức tạp hơn)
-        // Ở đây đơn giản là đánh dấu đang chạy
         globalCheckPromise = publicApi.get("/api/v2/setup/status");
         const res = await globalCheckPromise;
         const { status, step, message } = res.data;
 
-        // 1. Hoàn thành -> Login
+        // 1. Hoàn thành -> Login (CHỈ REDIRECT NẾU ĐANG Ở TRANG SETUP)
         if (status === "completed") {
-          alert("Setup already completed. Redirecting to login.");
-          localStorage.removeItem("setup_admin_key");
-          localStorage.setItem("system_setup_status", "completed");
-          window.location.hash = "#/login";
-          return;
+            // [FIX] Kiểm tra xem URL hiện tại có phải là /setup không
+            const isSetupPage = window.location.hash.includes("/setup");
+            
+            if (isSetupPage) {
+                alert("Setup already completed. Redirecting to login.");
+                localStorage.removeItem("setup_admin_key");
+                localStorage.setItem("system_setup_status", "completed");
+                window.location.hash = "#/login";
+            }
+            // Nếu không phải trang setup (ví dụ đang ở /dashboard), thì KHÔNG LÀM GÌ CẢ
+            // để tránh redirect loop.
+            return;
         }
 
-        // 2. Pending
+        // 2. Pending logic (giữ nguyên)
         if (status === "pending") {
           const serverStep = parseFloat(step);
 
@@ -149,8 +150,8 @@ export const useSetupWizard = () => {
         console.error("Status check failed", error);
         setCurrentStep(0);
       } finally {
-        globalCheckPromise = null; // Reset promise
-        setIsCheckingStatus(false); // Mở khóa UI
+        globalCheckPromise = null;
+        setIsCheckingStatus(false);
       }
     };
 
@@ -158,7 +159,7 @@ export const useSetupWizard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- ACTIONS (Giữ nguyên như cũ) ---
+  // --- ACTIONS (Giữ nguyên) ---
   const initAdmin = async (key: string): Promise<boolean> => {
     setIsLoading(true);
     try {

@@ -1,1 +1,0 @@
-// DELETED - Moved to src/components/layout/Header.tsx

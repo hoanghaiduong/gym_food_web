@@ -19,16 +19,13 @@ import { SidebarProvider } from '@/core/contexts/SidebarContext';
 import { UIProvider } from '@/core/contexts/UIContext';
 import UserLayout from '@/components/layout/UserLayout';
 import UserChatPage from '@/features/public/components/UserChatPage';
+import RegisterScreen from './features/auth/components/RegisterScreen';
+import ForgotPasswordScreen from './features/auth/components/ForgotPasswordScreen';
 
 const App: React.FC = () => {
   return (
     <HashRouter>
-      <ThemeProvider>
-        <SidebarProvider>
-          <UIProvider>
-            {/* Global UI Feedback Components */}
-            <LoadingBar />
-            <ToastContainer />
+     
             
             <SetupGuard>
                  <Routes>
@@ -39,8 +36,8 @@ const App: React.FC = () => {
 
                     {/* Public Auth Routes */}
                     <Route path="/login" element={<LoginScreen />} />
-                    <Route path="/register" element={<LoginScreen />} />
-                    <Route path="/forgot-password" element={<LoginScreen />} />
+                    <Route path="/register" element={<RegisterScreen />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
                     
                     {/* System Setup Route */}
                     <Route path="/setup" element={<SystemInitialization />} />
@@ -61,9 +58,7 @@ const App: React.FC = () => {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </SetupGuard>
-          </UIProvider>
-        </SidebarProvider>
-      </ThemeProvider>
+         
     </HashRouter>
   );
 };

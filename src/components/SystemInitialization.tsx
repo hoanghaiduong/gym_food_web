@@ -1,1 +1,0 @@
-// DELETED - Moved to src/features/setup/components/SystemInitialization.tsx

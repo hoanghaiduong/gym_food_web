@@ -1,1 +1,0 @@
-// DELETED - Moved to src/features/users/components/UserTable.tsx

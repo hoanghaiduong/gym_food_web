@@ -52,7 +52,7 @@ api.interceptors.response.use(
 // Used for status checks and initial handshakes
 export const publicApi: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 5000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },

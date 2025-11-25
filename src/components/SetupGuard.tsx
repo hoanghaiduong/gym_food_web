@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useTheme } from '@/core/contexts/ThemeContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 interface SetupGuardProps {
   children: React.ReactNode;
@@ -13,48 +15,82 @@ const SetupGuard: React.FC<SetupGuardProps> = ({ children }) => {
   const { isDarkMode } = useTheme();
   const [isChecking, setIsChecking] = useState(true);
 
+  // 1. Lấy token và user từ Redux store
+  const { token, user } = useSelector((state: RootState) => state.auth);
+  
+  // 2. Kiểm tra quyền Admin
+  // (Lưu ý: Backend phải trả về field 'role' trong object user)
+  const isAdmin = user?.role === 'admin';
+
   useEffect(() => {
     const checkSystem = async () => {
       try {
-        // 1. Check System Status (Prioritize LocalStorage for performance/demo)
         const localSetupStatus = localStorage.getItem('system_setup_status');
-        const hasAuthToken = !!localStorage.getItem('x-admin-key') || !!localStorage.getItem('access_token');
+        
+        // Check Auth: Có token redux HOẶC có key admin tạm thời (lúc setup)
+        const hasAuthToken = !!token || !!localStorage.getItem('x-admin-key');
         
         const isSetupComplete = localSetupStatus === 'completed';
         const path = location.pathname;
 
-        // SCENARIO 1: SYSTEM NOT INITIALIZED
+        // --- KỊCH BẢN 1: HỆ THỐNG CHƯA CÀI ĐẶT ---
         if (!isSetupComplete) {
-            // Must go to setup, unless already there
+            // Bắt buộc phải vào trang /setup
             if (path !== '/setup') {
                 navigate('/setup', { replace: true });
             }
         } 
-        // SCENARIO 2: SYSTEM INITIALIZED
+        // --- KỊCH BẢN 2: HỆ THỐNG ĐÃ CÀI ĐẶT XONG ---
         else {
-            // If trying to access setup page when already done -> Login
+            // Đã xong mà cố truy cập /setup -> Đá về Login
             if (path === '/setup') {
                  navigate('/login', { replace: true });
+                 return;
             }
-            // If trying to access protected routes without auth -> Login
-            else if (!hasAuthToken) {
-                 const isPublicRoute = path.startsWith('/login') || 
-                                       path.startsWith('/register') || 
-                                       path.startsWith('/forgot-password');
-                 
-                 if (!isPublicRoute) {
-                     navigate('/login', { replace: true });
+
+            // Định nghĩa các nhóm route
+            const isAuthRoute = path.startsWith('/login') || 
+                                path.startsWith('/register') || 
+                                path.startsWith('/forgot-password');
+            
+            // Các route chỉ dành cho Admin
+            const isAdminRoute = path.startsWith('/dashboard') ||
+                                 path.startsWith('/knowledge') ||
+                                 path.startsWith('/bot-config') ||
+                                 path.startsWith('/theme-studio') ||
+                                 path.startsWith('/logs') ||
+                                 path.startsWith('/settings') ||
+                                 path.startsWith('/playground');
+
+            // --- TRƯỜNG HỢP A: CHƯA ĐĂNG NHẬP ---
+            if (!hasAuthToken) {
+                 // Nếu cố truy cập trang Admin -> Đá về Login
+                 if (isAdminRoute) {
+                    navigate('/login', { replace: true });
                  }
+                 // Các trang public (/, /chat...) thì cho phép truy cập
             }
-            // If logged in and trying to access auth pages -> Dashboard
-            else if (hasAuthToken) {
-                 const isAuthRoute = path.startsWith('/login') || 
-                                     path.startsWith('/register') || 
-                                     path.startsWith('/forgot-password');
-                 
+            // --- TRƯỜNG HỢP B: ĐÃ ĐĂNG NHẬP ---
+            else {
+                 // 1. Đang ở trang Auth (Login/Register)
                  if (isAuthRoute) {
-                     navigate('/dashboard', { replace: true });
+                     if (isAdmin) {
+                         // Admin -> Vào Dashboard
+                         navigate('/dashboard', { replace: true });
+                     } else {
+                         // User thường -> Về trang chủ Chat
+                         navigate('/', { replace: true });
+                     }
                  }
+                 // 2. Đang cố vào trang Admin
+                 else if (isAdminRoute) {
+                     if (!isAdmin) {
+                         // Có token nhưng không phải admin -> Đá về trang chủ (hoặc trang 403)
+                         console.warn("Unauthorized access attempt to Admin area");
+                         navigate('/', { replace: true });
+                     }
+                 }
+                 // 3. Các trang khác (/) -> Cho phép cả Admin lẫn User
             }
         }
       } catch (error) {
@@ -65,9 +101,8 @@ const SetupGuard: React.FC<SetupGuardProps> = ({ children }) => {
     };
 
     checkSystem();
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, token, isAdmin]);
 
-  // Loading Screen
   if (isChecking) {
     return (
       <div className={`min-h-screen w-full flex flex-col items-center justify-center ${isDarkMode ? 'bg-[#030712]' : 'bg-[#F9FAFB]'}`}>

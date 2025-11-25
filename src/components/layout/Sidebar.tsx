@@ -14,8 +14,12 @@ import {
 import { useTheme } from '@/core/contexts/ThemeContext';
 import { useSidebar } from '@/core/contexts/SidebarContext';
 import { useUI } from '@/core/contexts/UIContext';
-import { useAuth } from '@/core/hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+// --- REDUX IMPORTS ---
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/redux/store';
+import { logoutUser } from '@/features/auth/authSlice';
 
 interface TooltipState {
   label: string;
@@ -34,12 +38,32 @@ const Sidebar: React.FC = () => {
     showUserProfile
   } = useSidebar();
   const { startLoading, stopLoading } = useUI();
-  const { logout } = useAuth();
+  
+  // --- REDUX HOOKS ---
+  const dispatch = useDispatch<AppDispatch>();
+  // Lấy thông tin user từ Redux để hiển thị (Optional)
+  const { user } = useSelector((state: RootState) => state.auth);
+
   const navigate = useNavigate();
   const location = useLocation();
 
   const [hoveredItem, setHoveredItem] = useState<TooltipState | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // --- HANDLE LOGOUT ---
+  const handleLogout = async () => {
+    startLoading();
+    try {
+      // Gọi action logout của Redux
+      await dispatch(logoutUser()).unwrap(); 
+    } catch (error) {
+      console.error("Logout failed", error);
+    } finally {
+      // Dù API có lỗi hay không thì Client cũng nên clear state và redirect
+      stopLoading();
+      navigate('/login');
+    }
+  };
 
   // Handle Navigation with Loading Effect
   const handleNavigate = (path: string) => {
@@ -92,7 +116,7 @@ const Sidebar: React.FC = () => {
         { id: 'theme_studio', path: '/theme-studio', label: 'Theme Studio', icon: Palette },
         { id: 'settings', path: '/settings', label: 'Settings', icon: Settings },
       ]
-    }
+    },
   ];
 
   return (
@@ -197,14 +221,18 @@ const Sidebar: React.FC = () => {
               >
                 <div className="flex items-center gap-3 overflow-hidden">
                   <img 
-                    src="https://picsum.photos/id/65/100/100" 
+                    src={"https://picsum.photos/id/65/100/100"} 
                     alt="Profile" 
                     className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-white dark:border-gray-700"
                   />
                   
                   <div className={`flex flex-col overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100 block'}`}>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white truncate">Brooklyn S.</span>
-                    <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">simmons@gamil.com</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                        {user?.full_name || user?.username || "Admin"}
+                    </span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                        {user?.email || "admin@example.com"}
+                    </span>
                   </div>
                 </div>
                 
@@ -213,7 +241,7 @@ const Sidebar: React.FC = () => {
 
               {/* Logout Button */}
               <button 
-                onClick={logout}
+                onClick={handleLogout}
                 className={`
                   group flex items-center rounded-xl cursor-pointer transition-all duration-200 border border-transparent
                   ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-3'}
