@@ -9,12 +9,13 @@ import { ThemeProvider } from "@/core/contexts/ThemeContext";
 import { SidebarProvider } from "@/core/contexts/SidebarContext";
 import { UIProvider } from "@/core/contexts/UIContext"; // Đã sửa lại đường dẫn cho đúng chuẩn core
 import ToastContainer from "@/components/ui/ToastContainer";
+import { injectStore } from "@/core/api/api";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
-
+injectStore(store); // Inject Redux store vào API module
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>

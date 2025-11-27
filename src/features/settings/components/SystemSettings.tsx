@@ -100,7 +100,7 @@ const SystemSettings: React.FC = () => {
       dbPort: '5432',
       dbUser: 'admin',
       dbPass: 'password123',
-      dbName: 'weihu_core',
+      dbName: 'gym_food_db',
       // Vector
       vectorProvider: 'Qdrant',
       vectorHost: 'http://localhost:6333',

@@ -164,7 +164,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
              <span><strong className="font-bold">↑↓</strong> to navigate</span>
              <span><strong className="font-bold">↵</strong> to select</span>
            </div>
-           <span>Weihu OS v2.4</span>
+           <span>Gym Food OS v2.4</span>
         </div>
       </div>
     </div>

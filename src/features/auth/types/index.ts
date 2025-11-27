@@ -8,6 +8,7 @@ export interface User {
   full_name: string;
   role: string;
   is_active: boolean;
+  avatar?: string;
 }
 
 // 2. Dữ liệu trả về khi Login thành công (Token)

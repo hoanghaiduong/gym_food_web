@@ -1,1 +1,0 @@
-// DELETED - Moved to src/core/hooks/useAuth.ts

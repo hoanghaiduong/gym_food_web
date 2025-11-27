@@ -101,18 +101,18 @@ export const useSetupWizard = () => {
 
         // 1. Hoàn thành -> Login (CHỈ REDIRECT NẾU ĐANG Ở TRANG SETUP)
         if (status === "completed") {
-            // [FIX] Kiểm tra xem URL hiện tại có phải là /setup không
-            const isSetupPage = window.location.hash.includes("/setup");
-            
-            if (isSetupPage) {
-                alert("Setup already completed. Redirecting to login.");
-                localStorage.removeItem("setup_admin_key");
-                localStorage.setItem("system_setup_status", "completed");
-                window.location.hash = "#/login";
-            }
-            // Nếu không phải trang setup (ví dụ đang ở /dashboard), thì KHÔNG LÀM GÌ CẢ
-            // để tránh redirect loop.
-            return;
+          // [FIX] Kiểm tra xem URL hiện tại có phải là /setup không
+          const isSetupPage = window.location.hash.includes("/setup");
+
+          if (isSetupPage) {
+            alert("Setup already completed. Redirecting to login.");
+            localStorage.removeItem("setup_admin_key");
+            localStorage.setItem("system_setup_status", "completed");
+            window.location.hash = "#/login";
+          }
+          // Nếu không phải trang setup (ví dụ đang ở /dashboard), thì KHÔNG LÀM GÌ CẢ
+          // để tránh redirect loop.
+          return;
         }
 
         // 2. Pending logic (giữ nguyên)
@@ -348,7 +348,11 @@ export const useSetupWizard = () => {
   const testLlm = async (): Promise<boolean> => {
     setIsLoading(true);
     addLog("INFO", `Testing ${formData.llmProvider}...`);
-    const payload = { api_key: formData.llmKey, model_name: formData.llmModel };
+    const payload = {
+      provider: formData.llmProvider,
+      api_key: formData.llmKey,
+      model_name: formData.llmModel,
+    };
     try {
       await api.post("/api/v2/setup/step4/test", payload, {
         headers: getAuthHeader(),

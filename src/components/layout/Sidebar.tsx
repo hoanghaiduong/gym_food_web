@@ -20,6 +20,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
 import { logoutUser } from '@/features/auth/authSlice';
+import { useAuth } from '@/core/hooks/useAuth';
 
 interface TooltipState {
   label: string;
@@ -38,7 +39,7 @@ const Sidebar: React.FC = () => {
     showUserProfile
   } = useSidebar();
   const { startLoading, stopLoading } = useUI();
-  
+  const {logout}=useAuth();
   // --- REDUX HOOKS ---
   const dispatch = useDispatch<AppDispatch>();
   // Lấy thông tin user từ Redux để hiển thị (Optional)
@@ -55,13 +56,13 @@ const Sidebar: React.FC = () => {
     startLoading();
     try {
       // Gọi action logout của Redux
-      await dispatch(logoutUser()).unwrap(); 
+      await logout() ;
     } catch (error) {
       console.error("Logout failed", error);
     } finally {
       // Dù API có lỗi hay không thì Client cũng nên clear state và redirect
       stopLoading();
-      navigate('/login');
+     
     }
   };
 
@@ -153,7 +154,7 @@ const Sidebar: React.FC = () => {
             </div>
             
             <div className={`overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-               <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">weihu</span>
+               <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">Gym Food</span>
             </div>
           </div>
 

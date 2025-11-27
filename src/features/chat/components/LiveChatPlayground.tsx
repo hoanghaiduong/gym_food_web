@@ -85,7 +85,7 @@ const RAG_CONTEXT_MOCK = [
 ];
 
 const JSON_DEBUG_MOCK = {
-  model: "gemini-1.5-pro",
+  model: "gemini-2.5-flash",
   usage: {
     prompt_tokens: 245,
     completion_tokens: 120,
@@ -306,7 +306,7 @@ const LiveChatPlayground: React.FC = () => {
                {/* Message Content */}
                <div className={`flex flex-col max-w-[80%] md:max-w-[70%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                  <div className="flex items-center gap-2 mb-1 px-1">
-                    <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{msg.role === 'assistant' ? 'Weihu Bot' : 'You'}</span>
+                    <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{msg.role === 'assistant' ? 'Gym Food' : 'You'}</span>
                  </div>
                  
                  <div className={`
@@ -351,7 +351,7 @@ const LiveChatPlayground: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Message Weihu Bot..." 
+                placeholder="Message Gym Food..." 
                 className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full py-4 pl-12 pr-14 focus:outline-none focus:border-brand-lime focus:ring-2 focus:ring-brand-lime/50 transition-all shadow-sm border border-gray-200 dark:border-gray-700/50"
               />
               

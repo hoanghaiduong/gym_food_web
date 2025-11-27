@@ -13,7 +13,7 @@ export const SetupSidebar: React.FC<Props> = ({ currentStep, stepStatus, isDarkM
     return (
         <div className="w-full md:w-[280px] flex flex-col p-6 border-b md:border-b-0 md:border-r border-gray-200/50 dark:border-gray-700/50 bg-white/40 dark:bg-black/20 relative transition-colors duration-300">
             <div className="mb-8">
-                <h1 className={`text-2xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Weihu Setup</h1>
+                <h1 className={`text-2xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Gym Food AI Setup</h1>
                 <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-bold">Configuration Wizard v2.5</p>
             </div>
             <div className="space-y-2 flex-1 overflow-y-auto hide-scrollbar">

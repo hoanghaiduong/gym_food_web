@@ -12,13 +12,8 @@ import LoginScreen from '@/features/auth/components/LoginScreen';
 import SystemInitialization from '@/features/setup/SystemInitialization';
 import LiveChatPlayground from '@/features/chat/components/LiveChatPlayground';
 import SetupGuard from '@/components/SetupGuard';
-import LoadingBar from '@/components/ui/LoadingBar';
-import ToastContainer from '@/components/ui/ToastContainer';
-import { ThemeProvider } from '@/core/contexts/ThemeContext';
-import { SidebarProvider } from '@/core/contexts/SidebarContext';
-import { UIProvider } from '@/core/contexts/UIContext';
 import UserLayout from '@/components/layout/UserLayout';
-import UserChatPage from '@/features/public/components/UserChatPage';
+import UserChatPage from '@/features/public/chat/UserChatPage';
 import RegisterScreen from './features/auth/components/RegisterScreen';
 import ForgotPasswordScreen from './features/auth/components/ForgotPasswordScreen';
 

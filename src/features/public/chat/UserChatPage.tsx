@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Menu } from "lucide-react";
+import { Menu, ShieldCheck, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { chatService } from "@/core/services/chatService";
 
-// Import Components
+// Import các Component đã tách
 import ChatSidebar from "@/features/public/chat/components/ChatSidebar";
 import ChatArea from "@/features/public/chat/components/ChatArea";
 import ChatInput from "@/features/public/chat/components/ChatInput";
 import { useChatHistory } from "@/features/public/chat/hooks/useChatHistory";
+import ConfirmModal from "./ui/ConfirmModal";
 import { useUI } from "@/core/contexts/UIContext";
-import ConfirmModal from "../chat/ui/ConfirmModal";
+import { useAuth } from "@/core/hooks/useAuth";
 
 const UserChatPage: React.FC = () => {
   // State Layout
@@ -21,8 +23,8 @@ const UserChatPage: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-
-  // Hooks
+  const {user}=useAuth();
+  // Sử dụng Hook
   const {
     groupedHistory,
     loading,
@@ -34,14 +36,13 @@ const UserChatPage: React.FC = () => {
   } = useChatHistory();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { startLoading, stopLoading } = useUI();
-
+  // 2. Tạo hàm xử lý xác nhận logout
   const handleConfirmLogout = async () => {
     startLoading();
-    await logout();
+    await logout(); // Gọi hàm logout từ hook useChatHistory
     setShowLogoutModal(false);
     stopLoading();
   };
-
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
@@ -54,7 +55,7 @@ const UserChatPage: React.FC = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // ... (Giữ nguyên các hàm handleSend, simulateTypingResponse, handleSelectHistory) ...
+  // Handlers
   const simulateTypingResponse = (fullText: string) => {
     setIsStreaming(true);
     const botMsgId = Date.now().toString();
@@ -74,7 +75,7 @@ const UserChatPage: React.FC = () => {
             msg.id === botMsgId ? { ...msg, isStreaming: false } : msg
           )
         );
-        reload();
+        reload(); // Reload lại history sau khi chat xong
       }
       setMessages((prev) => {
         const newMsgs = [...prev];
@@ -99,7 +100,7 @@ const UserChatPage: React.FC = () => {
     try {
       const data = await chatService.sendMessage(text);
       setIsTyping(false);
-      simulateTypingResponse(data?.answer || "Xin lỗi, lỗi kết nối.");
+      simulateTypingResponse(data?.data?.answer || "Xin lỗi, lỗi kết nối.");
     } catch (error) {
       setIsTyping(false);
       setMessages((prev) => [
@@ -130,7 +131,7 @@ const UserChatPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-transparent relative">
+    <div className="flex h-screen w-full overflow-hidden bg-transparent relative">
       <ConfirmModal
         isOpen={showClearModal}
         onClose={() => setShowClearModal(false)}
@@ -145,7 +146,6 @@ const UserChatPage: React.FC = () => {
         title="Đăng xuất?"
         message="Bạn có chắc chắn muốn đăng xuất?"
       />
-      
       {/* Sidebar */}
       <ChatSidebar
         isOpen={isSidebarOpen}
@@ -164,23 +164,46 @@ const UserChatPage: React.FC = () => {
         fetchNextPage={fetchNextPage}
       />
 
-      {/* Main Layout Area */}
+      {/* Main Layout */}
       <main className="flex-1 flex flex-col min-w-0 relative h-full">
-        
-        {/* Mobile Sidebar Toggle - Only show when sidebar is closed */}
-        {!isSidebarOpen && (
-            <div className="absolute top-4 left-4 z-30">
-                <button
+        <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-white/0 backdrop-blur-[2px]">
+          <div className="flex items-center gap-3">
+            {!isSidebarOpen && (
+              <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2.5 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border border-white/20 hover:bg-white dark:hover:bg-gray-800 transition-all text-gray-600 dark:text-gray-300 group"
-                >
-                <Menu size={20} className="group-hover:text-[#84CC16] transition-colors"/>
-                </button>
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border border-white/20 hover:bg-white dark:hover:bg-gray-800 transition-all text-gray-600 dark:text-gray-300"
+              >
+                <Menu size={20} />
+              </button>
+            )}
+            <div
+              className={`flex items-center gap-2 transition-opacity duration-300 ${
+                isSidebarOpen && !isMobile ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              <div className="w-8 h-8 bg-[#84CC16] rounded-lg flex items-center justify-center shadow-lg shadow-[#84CC16]/20">
+                <div className="w-3 h-3 bg-white rounded-sm" />
+              </div>
+              <span className="font-bold text-gray-900 dark:text-white tracking-tight">
+                Gym Food AI
+              </span>
             </div>
-        )}
+          </div>
+          <Link
+            to="/login"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-black/50 backdrop-blur-md border border-white/20 hover:bg-white/80 dark:hover:bg-black/70 transition-all group"
+          >
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-300 group-hover:text-[#84CC16]">
+              {user&& user?.full_name +"| Role: "+user?.role}
+            </span>
+            <ShieldCheck
+              size={14}
+              className="text-gray-400 group-hover:text-[#84CC16]"
+            />
+          </Link>
+        </header>
 
-        {/* Chat Area - Full height minus input */}
-        <div className="flex-1 overflow-y-auto scroll-smooth hide-scrollbar px-4 md:px-0 pt-4">
+        <div className="flex-1 overflow-y-auto scroll-smooth hide-scrollbar pt-20 pb-4 px-4 md:px-0">
           <ChatArea
             messages={messages}
             isTyping={isTyping}
@@ -188,7 +211,6 @@ const UserChatPage: React.FC = () => {
           />
         </div>
 
-        {/* Input Area */}
         <ChatInput
           input={input}
           setInput={setInput}

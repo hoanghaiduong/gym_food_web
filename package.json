@@ -1,5 +1,5 @@
 {
-  "name": "weihu-dashboard",
+  "name": "gym-food-dashboard",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.0",
-    "axios": "^1.6.7",
+    "axios": "^1.13.2",
+    "date-fns": "^4.1.0",
     "formik": "^2.4.9",
     "lucide-react": "0.263.1",
     "react": "^18.2.0",
