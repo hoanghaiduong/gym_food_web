@@ -9,15 +9,16 @@ import {
   PanelLeftClose,
   UserCircle2
 } from "lucide-react";
-import { HistoryItem } from "@/features/public/chat/hooks/useChatHistory";
+
 import { useAuth } from '@/core/hooks/useAuth';
+import { ChatSession } from "../hooks/useChatHistory";
 
 interface ChatSidebarProps {
   isOpen: boolean;
   isMobile: boolean;
   onClose: () => void;
   onNewChat: () => void;
-  onSelectHistory: (item: HistoryItem) => void;
+  onSelectHistory: (item: ChatSession) => void;
   onClearHistory: () => void;
   onLogout: () => void;
   groupedHistory: any[];
@@ -119,7 +120,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 {renderTimeGroup(group.label)}
               </h4>
               <div className="space-y-1">
-                {group.items.map((item: HistoryItem) => (
+                {group.items.map((item: ChatSession) => (
                   <button
                     key={item.id}
                     onClick={() => onSelectHistory(item)}
@@ -133,7 +134,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   >
                     <MessageSquare size={16} className="text-gray-400 group-hover:text-[#84CC16] transition-colors shrink-0" />
                     <p className="text-sm truncate w-full pr-2 font-medium group-hover:text-gray-900 dark:group-hover:text-white">
-                        {item.question}
+                        {item.title}
                     </p>
                   </button>
                 ))}
